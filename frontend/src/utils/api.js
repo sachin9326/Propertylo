@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
+  withCredentials: true
 });
+
+console.log("Global API Base URL:", import.meta.env.VITE_API_URL);
 
 console.log('Using API Base URL:', api.defaults.baseURL);
 

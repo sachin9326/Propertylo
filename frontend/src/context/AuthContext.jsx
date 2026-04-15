@@ -14,13 +14,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const { data } = await api.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password });
+    console.log("Current API URL:", import.meta.env.VITE_API_URL);
+    const { data } = await api.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password });
     setUser(data);
     localStorage.setItem('userInfo', JSON.stringify(data));
   };
 
   const register = async (name, email, password, role) => {
-    const { data } = await api.post(`${import.meta.env.VITE_API_URL}/auth/register`, { name, email, password, role });
+    console.log("Current API URL:", import.meta.env.VITE_API_URL);
+    const { data } = await api.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, { name, email, password, role });
     setUser(data);
     localStorage.setItem('userInfo', JSON.stringify(data));
   };

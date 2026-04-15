@@ -64,7 +64,8 @@ const PostProperty = () => {
     files.forEach(file => data.append('media', file));
 
     try {
-      const res = await api.post(`${import.meta.env.VITE_API_URL}/properties`, data, {
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      const res = await api.post(`${import.meta.env.VITE_API_URL}/api/properties`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       navigate(`/property/${res.data.id}`);

@@ -25,7 +25,8 @@ const Home = () => {
   // Check if user has completed quiz
   useEffect(() => {
     if (user) {
-      api.get(`${import.meta.env.VITE_API_URL}/ai/preferences`).then(({ data }) => {
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      api.get(`${import.meta.env.VITE_API_URL}/api/ai/preferences`).then(({ data }) => {
         setQuizCompleted(data.quizCompleted);
       }).catch(() => {});
     }
@@ -42,8 +43,9 @@ const Home = () => {
   const fetchProperties = useCallback(async () => {
     try {
       setLoading(true);
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
       const params = buildParams();
-      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/properties`, { params });
+      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/properties`, { params });
       setProperties(data);
       setResultCount(data.length);
 
@@ -51,7 +53,8 @@ const Home = () => {
       if (user && data.length > 0) {
         try {
           const ids = data.map(p => p.id);
-          const { data: scoreData } = await api.post(`${import.meta.env.VITE_API_URL}/ai/match-scores-bulk`, { propertyIds: ids });
+          console.log("Current API URL:", import.meta.env.VITE_API_URL);
+          const { data: scoreData } = await api.post(`${import.meta.env.VITE_API_URL}/api/ai/match-scores-bulk`, { propertyIds: ids });
           setMatchScores(scoreData.scores || {});
         } catch (e) {
           // Scores are optional — don't block UI

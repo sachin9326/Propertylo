@@ -71,8 +71,9 @@ const CommunityReviews = ({ propertyId, locality }) => {
   const fetchReviews = async () => {
     try {
       setLoading(true);
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
       const params = propertyId ? { propertyId } : { locality };
-      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/reviews`, { params });
+      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/reviews`, { params });
       setReviews(data.reviews || []);
       setAggregate(data.aggregate);
       setCount(data.count || 0);
@@ -86,7 +87,8 @@ const CommunityReviews = ({ propertyId, locality }) => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await api.post(`${import.meta.env.VITE_API_URL}/reviews`, { ...form, propertyId, locality });
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      await api.post(`${import.meta.env.VITE_API_URL}/api/reviews`, { ...form, propertyId, locality });
       setSubmitted(true);
       setShowForm(false);
       fetchReviews();
@@ -99,7 +101,8 @@ const CommunityReviews = ({ propertyId, locality }) => {
 
   const handleFlag = async (id) => {
     try {
-      await api.put(`${import.meta.env.VITE_API_URL}/reviews/flag/${id}`);
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      await api.put(`${import.meta.env.VITE_API_URL}/api/reviews/flag/${id}`);
       setReviews(prev => prev.filter(r => r.id !== id));
       alert('Review flagged for moderation. Thank you!');
     } catch (e) {}

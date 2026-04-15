@@ -80,7 +80,8 @@ const AIMatchQuiz = () => {
 
   const fetchExistingPrefs = async () => {
     try {
-      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/ai/preferences`);
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/ai/preferences`);
       if (data.quizCompleted && data.preferences) {
         setExistingPrefs(data.preferences);
         setAnswers(data.preferences);
@@ -106,7 +107,8 @@ const AIMatchQuiz = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await api.post(`${import.meta.env.VITE_API_URL}/ai/preferences`, answers);
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      await api.post(`${import.meta.env.VITE_API_URL}/api/ai/preferences`, answers);
       setSaved(true);
     } catch (error) {
       console.error(error);

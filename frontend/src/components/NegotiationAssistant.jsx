@@ -18,7 +18,8 @@ const NegotiationAssistant = ({ propertyId }) => {
     setLoading(true);
     setError(null);
     try {
-      const { data: result } = await api.post(`${import.meta.env.VITE_API_URL}/ai/negotiation`, { propertyId });
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      const { data: result } = await api.post(`${import.meta.env.VITE_API_URL}/api/ai/negotiation`, { propertyId });
       setData(result);
       setExpanded(true);
     } catch (err) {

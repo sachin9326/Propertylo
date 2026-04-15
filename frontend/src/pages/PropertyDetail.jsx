@@ -32,21 +32,25 @@ const PropertyDetail = () => {
   const fetchProperty = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/properties/${id}`);
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/properties/${id}`);
       setProperty(data);
       if (user) {
         try {
-          const fav = await api.get(`${import.meta.env.VITE_API_URL}/favorites/check/${id}`);
+          console.log("Current API URL:", import.meta.env.VITE_API_URL);
+          const fav = await api.get(`${import.meta.env.VITE_API_URL}/api/favorites/check/${id}`);
           setIsSaved(fav.data.saved);
         } catch (e) {}
         // Fetch AI match score
         try {
-          const { data: scoreRes } = await api.post(`${import.meta.env.VITE_API_URL}/ai/match-score`, { propertyId: id });
+          console.log("Current API URL:", import.meta.env.VITE_API_URL);
+          const { data: scoreRes } = await api.post(`${import.meta.env.VITE_API_URL}/api/ai/match-score`, { propertyId: id });
           if (scoreRes.score !== null) setMatchData(scoreRes);
         } catch (e) {}
       }
       try {
-        const similar = await api.get(`${import.meta.env.VITE_API_URL}/properties`, { params: { city: data.city, type: data.type } });
+        console.log("Current API URL:", import.meta.env.VITE_API_URL);
+        const similar = await api.get(`${import.meta.env.VITE_API_URL}/api/properties`, { params: { city: data.city, type: data.type } });
         setSimilarProperties(similar.data.filter(p => String(p.id) !== String(id)).slice(0, 4));
       } catch (e) {}
     } catch (error) {
@@ -59,8 +63,9 @@ const PropertyDetail = () => {
   const toggleSave = async () => {
     if (!user) { alert('Please login first'); return; }
     try {
-      if (isSaved) { await api.delete(`${import.meta.env.VITE_API_URL}/favorites/${id}`); setIsSaved(false); }
-      else { await api.post(`${import.meta.env.VITE_API_URL}/favorites`, { propertyId: id }); setIsSaved(true); }
+      console.log("Current API URL:", import.meta.env.VITE_API_URL);
+      if (isSaved) { await api.delete(`${import.meta.env.VITE_API_URL}/api/favorites/${id}`); setIsSaved(false); }
+      else { await api.post(`${import.meta.env.VITE_API_URL}/api/favorites`, { propertyId: id }); setIsSaved(true); }
     } catch (e) { console.error(e); }
   };
 
