@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  password       String
+  name           String
+  role           String   @default("SEEKER") // SEEKER or UPLOADER
+  phone          String?
+  preferences    String?  // JSON stringified lifestyle quiz answers
+  quizCompleted  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  properties Property[]
+  favorites  Favorite[]
+  reviews    Review[]
+  visits     Visit[]
+}
+
+model Property {
+  id               Int      @id @default(autoincrement())
+  title            String
+  description      String
+  address          String
+  city             String?
+  locality         String?
+  latitude         Float?
+  longitude        Float?
+  areaSqFt         Float
+  price            Float
+  type             String   // RENT, SALE, BUY
+  propertyType     String?  // Flat, Independent House, Villa, Plot
+  bhk              String?  // 1BHK, 2BHK, 3BHK, 4+ BHK
+  possessionStatus String?  // Ready to Move, Under Construction
+  listingType      String?  // New Launch, New Project, New Booking, Resale
+  isVerified       Boolean  @default(false)
+  isGated          Boolean  @default(false)
+  isNewLaunch      Boolean  @default(false)
+  isNewBooking     Boolean  @default(false)
+  imageUrls        String   // JSON stringified array
+  videoUrl         String?
+  furnishedStatus  String?  // Furnished, Semi-Furnished, Unfurnished
+  parking          String?  // Covered, Open, None
+  floor            String?  // Ground, Low (1-4), High (5+)
+  petFriendly      Boolean  @default(false)
+  nearSchool       Boolean  @default(false)
+  nearPark         Boolean  @default(false)
+  nearMetro        Boolean  @default(false)
+  nearHospital     Boolean  @default(false)
+  noiseLevel       String?  // Silent, Moderate, Busy
+  safetyRating     String?  // High, Medium, Low
+  views            Int      @default(0)
+
+  uploaderId  Int
+  uploader    User     @relation(fields: [uploaderId], references: [id])
+  favorites   Favorite[]
+  reviews     Review[]
+  visits      Visit[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  propertyId Int
+  user       User     @relation(fields: [userId], references: [id])
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  propertyId  Int?
+  locality    String?
+  society     String?
+  waterSupply Int      @default(3) // 1-5
+  powerBackup Int      @default(3)
+  security    Int      @default(3)
+  maintenance Int      @default(3)
+  noiseLevel  Int      @default(3)
+  parking     Int      @default(3)
+  neighborly  Int      @default(3)
+  management  Int      @default(3)
+  comment     String?
+  isVerified  Boolean  @default(false)
+  isFlagged   Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id])
+  property    Property? @relation(fields: [propertyId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Visit {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  propertyId  Int
+  date        String
+  timeSlot    String
+  status      String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW
+  isGroupTour Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id])
+  property    Property @relation(fields: [propertyId], references: [id])
+  createdAt   DateTime @default(now())
+}
