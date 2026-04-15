@@ -25,7 +25,7 @@ const Home = () => {
   // Check if user has completed quiz
   useEffect(() => {
     if (user) {
-      api.get(`/ai/preferences`).then(({ data }) => {
+      api.get(`${import.meta.env.VITE_API_URL}/ai/preferences`).then(({ data }) => {
         setQuizCompleted(data.quizCompleted);
       }).catch(() => {});
     }
@@ -43,7 +43,7 @@ const Home = () => {
     try {
       setLoading(true);
       const params = buildParams();
-      const { data } = await api.get(`/properties`, { params });
+      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/properties`, { params });
       setProperties(data);
       setResultCount(data.length);
 
@@ -51,7 +51,7 @@ const Home = () => {
       if (user && data.length > 0) {
         try {
           const ids = data.map(p => p.id);
-          const { data: scoreData } = await api.post(`/ai/match-scores-bulk`, { propertyIds: ids });
+          const { data: scoreData } = await api.post(`${import.meta.env.VITE_API_URL}/ai/match-scores-bulk`, { propertyIds: ids });
           setMatchScores(scoreData.scores || {});
         } catch (e) {
           // Scores are optional — don't block UI

@@ -31,20 +31,20 @@ const Dashboard = () => {
       setLoading(true);
       // Fetch saved properties
       try {
-        const fav = await api.get(`/favorites`);
+        const fav = await api.get(`${import.meta.env.VITE_API_URL}/favorites`);
         setSavedProperties(fav.data);
       } catch (e) {}
 
       // Fetch visits
       try {
-        const vis = await api.get(`/visits/my`);
+        const vis = await api.get(`${import.meta.env.VITE_API_URL}/visits/my`);
         setVisits(vis.data);
       } catch (e) {}
 
       // Fetch seller stats if UPLOADER
       if (user.role === 'UPLOADER') {
         try {
-          const stats = await api.get(`/favorites/dashboard/stats`);
+          const stats = await api.get(`${import.meta.env.VITE_API_URL}/favorites/dashboard/stats`);
           setSellerStats(stats.data);
         } catch (e) {}
       }
@@ -57,7 +57,7 @@ const Dashboard = () => {
 
   const removeFavorite = async (propertyId) => {
     try {
-      await api.post(`/favorites/${propertyId}`);
+      await api.post(`${import.meta.env.VITE_API_URL}/favorites/${propertyId}`);
       setSavedProperties(prev => prev.filter(p => p.id !== propertyId));
     } catch (e) { console.error(e); }
   };
@@ -72,7 +72,7 @@ const Dashboard = () => {
 
   const cancelVisit = async (id) => {
     try {
-      await api.put(`/visits/cancel/${id}`);
+      await api.put(`${import.meta.env.VITE_API_URL}/visits/cancel/${id}`);
       setVisits(prev => prev.map(v => v.id === id ? { ...v, status: 'CANCELLED' } : v));
     } catch (e) { alert('Cancel failed'); }
   };

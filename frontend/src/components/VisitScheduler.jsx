@@ -44,7 +44,7 @@ const VisitScheduler = ({ propertyId }) => {
   const fetchSlots = async () => {
     setSlotsLoading(true);
     try {
-      const { data } = await api.get(`/visits/slots/${propertyId}?date=${selectedDate}`);
+      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/visits/slots/${propertyId}?date=${selectedDate}`);
       setAvailableSlots(data.available);
       setBookedSlots(data.booked);
     } catch (e) {
@@ -59,7 +59,7 @@ const VisitScheduler = ({ propertyId }) => {
     if (!selectedDate || !selectedSlot) return;
     setLoading(true);
     try {
-      await api.post(`/visits/book`, { propertyId, date: selectedDate, timeSlot: selectedSlot });
+      await api.post(`${import.meta.env.VITE_API_URL}/visits/book`, { propertyId, date: selectedDate, timeSlot: selectedSlot });
       setBooked(true);
     } catch (err) {
       alert(err.response?.data?.message || 'Booking failed');

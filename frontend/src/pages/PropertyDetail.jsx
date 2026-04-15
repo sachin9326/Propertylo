@@ -32,21 +32,21 @@ const PropertyDetail = () => {
   const fetchProperty = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get(`/properties/${id}`);
+      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/properties/${id}`);
       setProperty(data);
       if (user) {
         try {
-          const fav = await api.get(`/favorites/check/${id}`);
+          const fav = await api.get(`${import.meta.env.VITE_API_URL}/favorites/check/${id}`);
           setIsSaved(fav.data.saved);
         } catch (e) {}
         // Fetch AI match score
         try {
-          const { data: scoreRes } = await api.post(`/ai/match-score`, { propertyId: id });
+          const { data: scoreRes } = await api.post(`${import.meta.env.VITE_API_URL}/ai/match-score`, { propertyId: id });
           if (scoreRes.score !== null) setMatchData(scoreRes);
         } catch (e) {}
       }
       try {
-        const similar = await api.get(`/properties`, { params: { city: data.city, type: data.type } });
+        const similar = await api.get(`${import.meta.env.VITE_API_URL}/properties`, { params: { city: data.city, type: data.type } });
         setSimilarProperties(similar.data.filter(p => String(p.id) !== String(id)).slice(0, 4));
       } catch (e) {}
     } catch (error) {
@@ -59,8 +59,8 @@ const PropertyDetail = () => {
   const toggleSave = async () => {
     if (!user) { alert('Please login first'); return; }
     try {
-      if (isSaved) { await api.delete(`/favorites/${id}`); setIsSaved(false); }
-      else { await api.post(`/favorites`, { propertyId: id }); setIsSaved(true); }
+      if (isSaved) { await api.delete(`${import.meta.env.VITE_API_URL}/favorites/${id}`); setIsSaved(false); }
+      else { await api.post(`${import.meta.env.VITE_API_URL}/favorites`, { propertyId: id }); setIsSaved(true); }
     } catch (e) { console.error(e); }
   };
 
