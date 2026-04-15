@@ -72,7 +72,7 @@ const CommunityReviews = ({ propertyId, locality }) => {
     try {
       setLoading(true);
       const params = propertyId ? { propertyId } : { locality };
-      const { data } = await api.get('/reviews', { params });
+      const { data } = await api.get(`/reviews`, { params });
       setReviews(data.reviews || []);
       setAggregate(data.aggregate);
       setCount(data.count || 0);
@@ -86,7 +86,7 @@ const CommunityReviews = ({ propertyId, locality }) => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await api.post('/reviews', { ...form, propertyId, locality });
+      await api.post(`/reviews`, { ...form, propertyId, locality });
       setSubmitted(true);
       setShowForm(false);
       fetchReviews();

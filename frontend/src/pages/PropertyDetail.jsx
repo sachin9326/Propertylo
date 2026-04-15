@@ -41,12 +41,12 @@ const PropertyDetail = () => {
         } catch (e) {}
         // Fetch AI match score
         try {
-          const { data: scoreRes } = await api.post('/ai/match-score', { propertyId: id });
+          const { data: scoreRes } = await api.post(`/ai/match-score`, { propertyId: id });
           if (scoreRes.score !== null) setMatchData(scoreRes);
         } catch (e) {}
       }
       try {
-        const similar = await api.get('/properties', { params: { city: data.city, type: data.type } });
+        const similar = await api.get(`/properties`, { params: { city: data.city, type: data.type } });
         setSimilarProperties(similar.data.filter(p => String(p.id) !== String(id)).slice(0, 4));
       } catch (e) {}
     } catch (error) {
@@ -60,7 +60,7 @@ const PropertyDetail = () => {
     if (!user) { alert('Please login first'); return; }
     try {
       if (isSaved) { await api.delete(`/favorites/${id}`); setIsSaved(false); }
-      else { await api.post('/favorites', { propertyId: id }); setIsSaved(true); }
+      else { await api.post(`/favorites`, { propertyId: id }); setIsSaved(true); }
     } catch (e) { console.error(e); }
   };
 

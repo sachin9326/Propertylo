@@ -31,20 +31,20 @@ const Dashboard = () => {
       setLoading(true);
       // Fetch saved properties
       try {
-        const fav = await api.get('/favorites');
+        const fav = await api.get(`/favorites`);
         setSavedProperties(fav.data);
       } catch (e) {}
 
       // Fetch visits
       try {
-        const vis = await api.get('/visits/my');
+        const vis = await api.get(`/visits/my`);
         setVisits(vis.data);
       } catch (e) {}
 
       // Fetch seller stats if UPLOADER
       if (user.role === 'UPLOADER') {
         try {
-          const stats = await api.get('/favorites/dashboard/stats');
+          const stats = await api.get(`/favorites/dashboard/stats`);
           setSellerStats(stats.data);
         } catch (e) {}
       }

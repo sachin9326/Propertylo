@@ -59,7 +59,7 @@ const VisitScheduler = ({ propertyId }) => {
     if (!selectedDate || !selectedSlot) return;
     setLoading(true);
     try {
-      await api.post('/visits/book', { propertyId, date: selectedDate, timeSlot: selectedSlot });
+      await api.post(`/visits/book`, { propertyId, date: selectedDate, timeSlot: selectedSlot });
       setBooked(true);
     } catch (err) {
       alert(err.response?.data?.message || 'Booking failed');

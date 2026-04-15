@@ -64,7 +64,7 @@ const PostProperty = () => {
     files.forEach(file => data.append('media', file));
 
     try {
-      const res = await api.post('/properties', data, {
+      const res = await api.post(`/properties`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       navigate(`/property/${res.data.id}`);
