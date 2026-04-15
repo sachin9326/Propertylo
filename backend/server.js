@@ -14,7 +14,10 @@ const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "https://propertylo-sachin.vercel.app", 
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

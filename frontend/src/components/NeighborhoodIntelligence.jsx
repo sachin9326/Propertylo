@@ -180,7 +180,7 @@ const NeighborhoodIntelligence = ({ locality, city, latitude, longitude }) => {
         {/* Simulated map tiles look */}
         <div className="absolute inset-0"
           style={{
-            backgroundImage: `url('https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${longitude || 77.209},${latitude || 28.614},13,0/700x210?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw')`,
+            backgroundImage: `url('')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
