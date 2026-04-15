@@ -78,7 +78,7 @@ async function seed() {
     await prisma.property.create({
       data: {
         ...prop,
-        imageUrls: JSON.stringify([]),
+        imageUrls: JSON.stringify(['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900&q=80']),
         uploaderId: uploader.id,
         views: Math.floor(Math.random() * 500) + 10,
         createdAt,
