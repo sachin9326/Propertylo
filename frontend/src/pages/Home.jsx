@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import PropertyCard from '../components/PropertyCard';
 import FilterSidebar from '../components/FilterSidebar';
-import { Search, SlidersHorizontal, MapPin, Brain, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, Brain, Sparkles, Key, Home as HomeIcon, Building2, Bed, Map, BarChart, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Home = () => {
@@ -25,8 +25,7 @@ const Home = () => {
   // Check if user has completed quiz
   useEffect(() => {
     if (user) {
-      console.log("Current API URL:", import.meta.env.VITE_API_URL);
-      api.get(`${import.meta.env.VITE_API_URL}/api/ai/preferences`).then(({ data }) => {
+      api.get('/api/ai/preferences').then(({ data }) => {
         setQuizCompleted(data.quizCompleted);
       }).catch(() => {});
     }
@@ -43,9 +42,8 @@ const Home = () => {
   const fetchProperties = useCallback(async () => {
     try {
       setLoading(true);
-      console.log("Current API URL:", import.meta.env.VITE_API_URL);
       const params = buildParams();
-      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/properties`, { params });
+      const { data } = await api.get('/api/properties', { params });
       setProperties(data);
       setResultCount(data.length);
 
@@ -53,8 +51,7 @@ const Home = () => {
       if (user && data.length > 0) {
         try {
           const ids = data.map(p => p.id);
-          console.log("Current API URL:", import.meta.env.VITE_API_URL);
-          const { data: scoreData } = await api.post(`${import.meta.env.VITE_API_URL}/api/ai/match-scores-bulk`, { propertyIds: ids });
+          const { data: scoreData } = await api.post('/api/ai/match-scores-bulk', { propertyIds: ids });
           setMatchScores(scoreData.scores || {});
         } catch (e) {
           // Scores are optional — don't block UI
@@ -114,6 +111,56 @@ const Home = () => {
           </form>
         </div>
       </div>
+ 
+      {/* ====== CATEGORY SECTION ====== */}
+      <div className="grid grid-cols-4 md:grid-cols-7 gap-3 mb-8">
+        {[
+          { label: 'Buy', icon: HomeIcon, color: 'text-blue-600', bg: 'bg-blue-50', cat: 'BUY' },
+          { label: 'Rent', icon: Key, color: 'text-emerald-600', bg: 'bg-emerald-50', cat: 'RENT' },
+          { label: 'Commercial', icon: Building2, color: 'text-amber-600', bg: 'bg-amber-50', cat: 'COMMERCIAL' },
+          // The Add Button inserted between Commercial and PG
+          { 
+            label: 'Sell/Rent', 
+            icon: Plus, 
+            color: 'text-white', 
+            bg: 'bg-primary', 
+            link: '/post-property',
+            isSpecial: true 
+          },
+          { label: 'PG', icon: Bed, color: 'text-purple-600', bg: 'bg-purple-50', cat: 'PG' },
+          { label: 'Plot / Land', icon: Map, color: 'text-rose-600', bg: 'bg-rose-50', cat: 'PLOT_LAND' },
+          { label: 'Insights', icon: BarChart, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '#' },
+        ].map((item, i) => {
+          if (item.isSpecial) {
+            return (
+              <Link
+                key={i}
+                to={item.link}
+                className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group"
+              >
+                <div className={`p-2.5 ${item.bg} ${item.color} rounded-xl group-hover:scale-110 transition-transform`}>
+                  <item.icon size={20} className="stroke-[3px]" />
+                </div>
+                <span className="text-[10px] md:text-xs font-black text-slate-800 uppercase tracking-tight">{item.label}</span>
+              </Link>
+            );
+          }
+
+          return (
+            <button
+              key={i}
+              onClick={() => item.cat && setFilters(prev => ({ ...prev, category: item.cat }))}
+              className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group"
+            >
+              <div className={`p-2.5 ${item.bg} ${item.color} rounded-xl group-hover:scale-110 transition-transform`}>
+                <item.icon size={20} />
+              </div>
+              <span className="text-[10px] md:text-xs font-bold text-slate-700">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
 
       {/* ====== AI QUIZ PROMPT (if logged in + no quiz) ====== */}
       {user && !quizCompleted && (

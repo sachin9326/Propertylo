@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import PriceHistoryChart from '../components/PriceHistoryChart';
 import AIMatchBadge from '../components/AIMatchBadge';
@@ -32,25 +32,21 @@ const PropertyDetail = () => {
   const fetchProperty = async () => {
     try {
       setLoading(true);
-      console.log("Current API URL:", import.meta.env.VITE_API_URL);
-      const { data } = await api.get(`${import.meta.env.VITE_API_URL}/api/properties/${id}`);
+      const { data } = await api.get(`/api/properties/${id}`);
       setProperty(data);
       if (user) {
         try {
-          console.log("Current API URL:", import.meta.env.VITE_API_URL);
-          const fav = await api.get(`${import.meta.env.VITE_API_URL}/api/favorites/check/${id}`);
+          const fav = await api.get(`/api/favorites/check/${id}`);
           setIsSaved(fav.data.saved);
         } catch (e) {}
         // Fetch AI match score
         try {
-          console.log("Current API URL:", import.meta.env.VITE_API_URL);
-          const { data: scoreRes } = await api.post(`${import.meta.env.VITE_API_URL}/api/ai/match-score`, { propertyId: id });
+          const { data: scoreRes } = await api.post('/api/ai/match-score', { propertyId: id });
           if (scoreRes.score !== null) setMatchData(scoreRes);
         } catch (e) {}
       }
       try {
-        console.log("Current API URL:", import.meta.env.VITE_API_URL);
-        const similar = await api.get(`${import.meta.env.VITE_API_URL}/api/properties`, { params: { city: data.city, type: data.type } });
+        const similar = await api.get('/api/properties', { params: { city: data.city, type: data.type } });
         setSimilarProperties(similar.data.filter(p => String(p.id) !== String(id)).slice(0, 4));
       } catch (e) {}
     } catch (error) {
@@ -63,9 +59,8 @@ const PropertyDetail = () => {
   const toggleSave = async () => {
     if (!user) { alert('Please login first'); return; }
     try {
-      console.log("Current API URL:", import.meta.env.VITE_API_URL);
-      if (isSaved) { await api.delete(`${import.meta.env.VITE_API_URL}/api/favorites/${id}`); setIsSaved(false); }
-      else { await api.post(`${import.meta.env.VITE_API_URL}/api/favorites`, { propertyId: id }); setIsSaved(true); }
+      if (isSaved) { await api.delete(`/api/favorites/${id}`); setIsSaved(false); }
+      else { await api.post('/api/favorites', { propertyId: id }); setIsSaved(true); }
     } catch (e) { console.error(e); }
   };
 
@@ -81,7 +76,7 @@ const PropertyDetail = () => {
   }
 
   const images = property.imageUrls && property.imageUrls.length > 0
-    ? property.imageUrls
+    ? property.imageUrls.map(url => getImageUrl(url))
     : [
         'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=80',
         'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=900&q=80',
@@ -399,7 +394,7 @@ const PropertyDetail = () => {
                 className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all group">
                 <div className="aspect-[16/9] overflow-hidden">
                   <img
-                    src={p.imageUrls?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80'}
+                    src={getImageUrl(p.imageUrls?.[0])}
                     alt={p.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

@@ -6,7 +6,7 @@ const upload = require('../middleware/uploadMiddleware');
 
 router.route('/')
   .get(getProperties)
-  .post(protect, uploaderOnly, upload.array('media', 10), createProperty);
+  .post(protect, upload.array('media', 10), createProperty);
 
 router.route('/:id').get(getPropertyById);
 

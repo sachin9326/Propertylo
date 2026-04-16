@@ -60,6 +60,9 @@ model Property {
   nearHospital     Boolean  @default(false)
   noiseLevel       String?  // Silent, Moderate, Busy
   safetyRating     String?  // High, Medium, Low
+  category         String?  // BUY, RENT, COMMERCIAL, PG, PLOT_LAND
+  propertyKind     String?  // Residential, Commercial
+  contactInfo      String?
   views            Int      @default(0)
 
   uploaderId  Int

@@ -10,6 +10,7 @@ const FilterSidebar = ({ filters, setFilters, isOpen, setIsOpen }) => {
     listing: true,
     area: true,
     toggles: true,
+    category: true,
   });
 
   const toggleSection = (section) => {
@@ -253,6 +254,20 @@ const FilterSidebar = ({ filters, setFilters, isOpen, setIsOpen }) => {
                 {option}
               </button>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* ============ CATEGORY ============ */}
+      <div className="border-b border-slate-100">
+        <SectionHeader title="Category" section="category" />
+        {expandedSections.category && (
+          <div className="pb-4 space-y-1">
+            <CheckboxItem label="Buy" filterKey="category" value="BUY" />
+            <CheckboxItem label="Rent" filterKey="category" value="RENT" />
+            <CheckboxItem label="Commercial" filterKey="category" value="COMMERCIAL" />
+            <CheckboxItem label="PG" filterKey="category" value="PG" />
+            <CheckboxItem label="Plot / Land" filterKey="category" value="PLOT_LAND" />
           </div>
         )}
       </div>

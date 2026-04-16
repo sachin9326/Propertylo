@@ -2,14 +2,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Maximize, FileImage, BadgeCheck, Shield, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import AIMatchBadge from './AIMatchBadge';
 
 const PropertyCard = ({ property, matchScores = {} }) => {
   const { user } = useAuth();
-  const imageUrl = property.imageUrls && property.imageUrls.length > 0
-    ? property.imageUrls[0]
-    : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80';
+  const imageUrl = getImageUrl(property.imageUrls?.[0]);
 
   const matchData = matchScores[property.id] || null;
 

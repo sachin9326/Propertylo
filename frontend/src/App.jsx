@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import api from './utils/api';
+import { useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
 import PostProperty from './pages/PostProperty';
@@ -9,6 +11,7 @@ import EMICalculator from './pages/EMICalculator';
 import ROICalculator from './pages/ROICalculator';
 import Dashboard from './pages/Dashboard';
 import AIMatchQuiz from './pages/AIMatchQuiz';
+import MobileBottomNav from './components/MobileBottomNav';
 
 // Error Boundary
 class ErrorBoundary extends React.Component {
@@ -44,6 +47,13 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
+  React.useEffect(() => {
+    // Wake up Render backend
+    api.get('/api/health').catch(() => {
+      console.log('Backend waking up...');
+    });
+  }, []);
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -60,6 +70,7 @@ function App() {
             <Route path="/ai-quiz" element={<AIMatchQuiz />} />
           </Routes>
         </main>
+        <MobileBottomNav />
       </div>
     </ErrorBoundary>
   );

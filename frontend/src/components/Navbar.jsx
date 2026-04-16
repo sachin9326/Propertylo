@@ -101,13 +101,11 @@ const Navbar = () => {
                 <span className="inline-flex items-center justify-center w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
               </Link>
 
-              {user.role === 'UPLOADER' && (
-                <Link to="/post-property"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-blue-600 transition-colors shadow-sm">
-                  <PlusCircle size={15} />
-                  <span>Post Property</span>
-                </Link>
-              )}
+              <Link to="/post-property"
+                className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-blue-600 transition-colors shadow-sm">
+                <PlusCircle size={15} />
+                <span>Post Property</span>
+              </Link>
 
               <div className="flex items-center gap-1 ml-1 pl-3 border-l border-slate-200">
                 <Link to="/dashboard"
@@ -183,12 +181,10 @@ const Navbar = () => {
                 className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm ${isActive('/dashboard') ? 'bg-primary/10 text-primary' : 'text-slate-700 hover:bg-slate-50'}`}>
                 <LayoutDashboard size={15} /> Dashboard
               </Link>
-              {user.role === 'UPLOADER' && (
-                <Link to="/post-property" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-semibold text-sm">
-                  <PlusCircle size={15} /> Post Property
-                </Link>
-              )}
+              <Link to="/post-property" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-semibold text-sm">
+                <PlusCircle size={15} /> Post Property
+              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-medium text-sm"

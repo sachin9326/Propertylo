@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import {
   Heart, Home, Eye, TrendingUp, Plus, Trash2, Edit3,
   Building2, MapPin, IndianRupee, Calendar, User, Settings,
@@ -31,23 +31,20 @@ const Dashboard = () => {
       setLoading(true);
       // Fetch saved properties
       try {
-        console.log("Current API URL:", import.meta.env.VITE_API_URL);
-        const fav = await api.get(`${import.meta.env.VITE_API_URL}/api/favorites`);
+        const fav = await api.get('/api/favorites');
         setSavedProperties(fav.data);
       } catch (e) {}
 
       // Fetch visits
       try {
-        console.log("Current API URL:", import.meta.env.VITE_API_URL);
-        const vis = await api.get(`${import.meta.env.VITE_API_URL}/api/visits/my`);
+        const vis = await api.get('/api/visits/my');
         setVisits(vis.data);
       } catch (e) {}
 
       // Fetch seller stats if UPLOADER
       if (user.role === 'UPLOADER') {
         try {
-          console.log("Current API URL:", import.meta.env.VITE_API_URL);
-          const stats = await api.get(`${import.meta.env.VITE_API_URL}/api/favorites/dashboard/stats`);
+          const stats = await api.get('/api/favorites/dashboard/stats');
           setSellerStats(stats.data);
         } catch (e) {}
       }
@@ -60,8 +57,7 @@ const Dashboard = () => {
 
   const removeFavorite = async (propertyId) => {
     try {
-      console.log("Current API URL:", import.meta.env.VITE_API_URL);
-      await api.post(`${import.meta.env.VITE_API_URL}/api/favorites/${propertyId}`);
+      await api.post(`/api/favorites/${propertyId}`);
       setSavedProperties(prev => prev.filter(p => p.id !== propertyId));
     } catch (e) { console.error(e); }
   };
@@ -76,8 +72,7 @@ const Dashboard = () => {
 
   const cancelVisit = async (id) => {
     try {
-      console.log("Current API URL:", import.meta.env.VITE_API_URL);
-      await api.put(`${import.meta.env.VITE_API_URL}/api/visits/cancel/${id}`);
+      await api.put(`/api/visits/cancel/${id}`);
       setVisits(prev => prev.map(v => v.id === id ? { ...v, status: 'CANCELLED' } : v));
     } catch (e) { alert('Cancel failed'); }
   };
@@ -228,7 +223,7 @@ const Dashboard = () => {
                   {savedProperties.map(property => (
                     <div key={property.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex">
                       <Link to={`/property/${property.id}`} className="w-40 flex-shrink-0">
-                        <img src={property.imageUrls?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200&q=80'} alt={property.title}
+                        <img src={getImageUrl(property.imageUrls?.[0])} alt={property.title}
                           className="w-full h-full object-cover" />
                       </Link>
                       <div className="p-4 flex-1 flex flex-col">
@@ -347,7 +342,7 @@ const Dashboard = () => {
                   {sellerStats.listings.map(property => (
                     <div key={property.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center gap-4">
                       <Link to={`/property/${property.id}`} className="w-24 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-slate-100">
-                        <img src={property.imageUrls?.[0] || 'https://via.placeholder.com/100?text=No+Image'} alt="" className="w-full h-full object-cover" />
+                        <img src={getImageUrl(property.imageUrls?.[0])} alt="" className="w-full h-full object-cover" />
                       </Link>
                       <div className="flex-1 min-w-0">
                         <Link to={`/property/${property.id}`} className="font-bold text-slate-800 hover:text-primary transition-colors line-clamp-1">{property.title}</Link>

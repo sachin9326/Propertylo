@@ -15,10 +15,31 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173", 
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Allow if no origin (like mobile apps or curl) or if in allowed list
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      console.log('CORS Blocked for origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
+
 app.use(express.json());
+
+// Health Check for Render keep-alive
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date() });
+});
 
 // Request logging for debugging
 app.use((req, res, next) => {
@@ -36,8 +57,15 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-app.get('/', (req, res) => {
-  res.send('API is running...');
+// --- Static Frontend Serving ---
+// Serve the React build files from the frontend/dist folder
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+// --- Catch-all Route ---
+// For any request that doesn't match an API route or static file, 
+// serve the index.html from the frontend build.
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
 // Express 5 error handler - must have exactly 4 parameters

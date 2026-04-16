@@ -23,7 +23,9 @@ const getProperties = async (req, res) => {
       minArea,
       maxArea,
       city,
+      category,
     } = req.query;
+    console.log("Incoming Query Params:", req.query);
 
     let whereClause = {};
 
@@ -45,6 +47,16 @@ const getProperties = async (req, res) => {
     // --- City filter ---
     if (city) {
       whereClause.city = { contains: city };
+    }
+
+    // --- Category filter ---
+    if (category) {
+      const catValues = category.split(',');
+      if (catValues.length === 1) {
+        whereClause.category = catValues[0];
+      } else {
+        whereClause.category = { in: catValues };
+      }
     }
 
     // --- Property Type (Flat, Villa, Plot...) multi-select ---
@@ -170,7 +182,8 @@ const createProperty = async (req, res) => {
     const {
       title, description, address, areaSqFt, price, type,
       city, locality, propertyType, bhk, possessionStatus, listingType,
-      isVerified, isGated, isNewLaunch, isNewBooking
+      isVerified, isGated, isNewLaunch, isNewBooking, category,
+      propertyKind, contactInfo
     } = req.body;
 
     // Process files from multer
@@ -209,6 +222,9 @@ const createProperty = async (req, res) => {
         isGated: isGated === 'true' || isGated === true,
         isNewLaunch: isNewLaunch === 'true' || isNewLaunch === true,
         isNewBooking: isNewBooking === 'true' || isNewBooking === true,
+        category: category || null,
+        propertyKind: propertyKind || null,
+        contactInfo: contactInfo || null,
         imageUrls: JSON.stringify(imageUrls),
         videoUrl: videoUrl || null,
         uploaderId: req.user.id
