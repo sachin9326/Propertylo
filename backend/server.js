@@ -41,6 +41,15 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
+// Root route for backend
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: "Propertylo Backend is running", 
+    version: "1.0.0",
+    docs: "Please use /api/auth or other /api routes"
+  });
+});
+
 // Request logging for debugging
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -50,23 +59,13 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// --- API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/reviews', reviewRoutes);
-
-// --- Static Frontend Serving ---
-// Serve the React build files from the frontend/dist folder
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
-// --- Catch-all Route ---
-// For any request that doesn't match an API route or static file, 
-// serve the index.html from the frontend build.
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-});
 
 // Express 5 error handler - must have exactly 4 parameters
 app.use((err, req, res, next) => {
