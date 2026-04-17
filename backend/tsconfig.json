@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "paths": {
+      "prisma/config": ["./node_modules/@prisma/config"]
+    }
+  },
+  "include": ["prisma.config.ts"]
+}

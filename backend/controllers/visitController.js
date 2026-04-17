@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 // Generate available time slots for a property
 const getAvailableSlots = async (req, res) => {

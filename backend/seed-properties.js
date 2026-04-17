@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('./db');
 
 const properties = [
   // ======= MUMBAI ======= (6 listings)
@@ -51,7 +50,7 @@ async function seed() {
   // Ensure uploader user exists
   let uploader = await prisma.user.findUnique({ where: { email: 'sachin@gmail.com' } });
   if (!uploader) {
-    const bcrypt = require('bcryptjs');
+    const bcrypt = require('bcrypt');
     uploader = await prisma.user.create({
       data: {
         email: 'sachin@gmail.com',
