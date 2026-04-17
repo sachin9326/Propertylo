@@ -33,23 +33,24 @@ async function importData() {
   const properties = Array.from(mergedProperties.values());
   console.log(`\n📄 Total unique properties found: ${properties.length}`);
 
-  // Get or Create a default uploader
-  let uploader = await prisma.user.findFirst({ where: { role: 'UPLOADER' } });
-  if (!uploader) {
-    uploader = await prisma.user.findFirst();
-  }
-
-  if (!uploader) {
-      console.log('⚠️ No user found to assign as uploader.');
-      return;
-  }
-
-  // Clear existing properties (to avoid duplicates and provide "fresh" data)
-  console.log('🗑️  Clearing existing property data...');
+  // 1. DEEP CLEAN: Wipe everything
+  console.log('🗑️  Performing Deep Clean - Wiping all tables...');
   await prisma.favorite.deleteMany();
   await prisma.review.deleteMany();
   await prisma.visit.deleteMany();
   await prisma.property.deleteMany();
+  await prisma.user.deleteMany();
+
+  // 2. Create Fresh System Admin
+  console.log('👤 Creating fresh System Admin user...');
+  const uploader = await prisma.user.create({
+    data: {
+      email: 'admin@propertylo.com',
+      password: '$2b$10$YourHashedPasswordHere', 
+      name: 'System Admin',
+      role: 'UPLOADER'
+    }
+  });
 
   let count = 0;
   for (const item of properties) {
