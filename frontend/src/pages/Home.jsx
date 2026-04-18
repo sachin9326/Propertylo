@@ -10,10 +10,13 @@ const Home = () => {
   const { user } = useAuth();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [resultCount, setResultCount] = useState(0);
   const [matchScores, setMatchScores] = useState({});
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -32,27 +35,42 @@ const Home = () => {
   }, [user]);
 
   const buildParams = useCallback(() => {
-    const params = {};
+    const params = { page, limit: 12 };
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value !== '' && value !== 'ALL') params[key] = value;
     });
     return params;
-  }, [filters]);
+  }, [filters, page]);
 
-  const fetchProperties = useCallback(async () => {
+  const fetchProperties = useCallback(async (isLoadMore = false) => {
     try {
-      setLoading(true);
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      
       const params = buildParams();
       const { data } = await api.get('/api/properties', { params });
-      setProperties(data);
-      setResultCount(data.length);
+      
+      // Handle the new paginated API response
+      const newProperties = data.properties || [];
+      
+      if (isLoadMore) {
+        setProperties(prev => [...prev, ...newProperties]);
+      } else {
+        setProperties(newProperties);
+      }
+      
+      setResultCount(data.total || newProperties.length);
+      setHasMore(data.page < data.totalPages);
 
       // Fetch AI match scores if user is logged in
-      if (user && data.length > 0) {
+      if (user && newProperties.length > 0) {
         try {
-          const ids = data.map(p => p.id);
+          const ids = newProperties.map(p => p.id);
           const { data: scoreData } = await api.post('/api/ai/match-scores-bulk', { propertyIds: ids });
-          setMatchScores(scoreData.scores || {});
+          setMatchScores(prev => ({ ...prev, ...(scoreData.scores || {}) }));
         } catch (e) {
           // Scores are optional — don't block UI
         }
@@ -61,14 +79,21 @@ const Home = () => {
       console.error('Error fetching properties:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [buildParams, user]);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchProperties(), 400);
+    // If page is 1, it's a new search, if page > 1, it's load more
+    debounceRef.current = setTimeout(() => fetchProperties(page > 1), 400);
     return () => clearTimeout(debounceRef.current);
-  }, [filters, fetchProperties]);
+  }, [filters, page, fetchProperties]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -221,11 +246,24 @@ const Home = () => {
               </div>
             </div>
           ) : properties.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {properties.map(property => (
-                <PropertyCard key={property.id} property={property} matchScores={matchScores} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {properties.map(property => (
+                  <PropertyCard key={property.id} property={property} matchScores={matchScores} />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="mt-8 text-center">
+                  <button
+                    onClick={() => setPage(prev => prev + 1)}
+                    disabled={loadingMore}
+                    className="px-8 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:border-primary hover:text-primary transition-all shadow-sm disabled:opacity-50"
+                  >
+                    {loadingMore ? 'Loading...' : 'Load More Properties'}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 shadow-sm">
               <Search size={48} className="mx-auto text-slate-300 mb-4" />

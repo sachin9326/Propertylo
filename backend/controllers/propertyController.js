@@ -126,22 +126,36 @@ const getProperties = async (req, res) => {
       whereClause.videoUrl = { not: null };
     }
 
-    const properties = await prisma.property.findMany({
-      where: whereClause,
-      include: {
-        uploader: {
-          select: { name: true, email: true, phone: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const [total, properties] = await prisma.$transaction([
+      prisma.property.count({ where: whereClause }),
+      prisma.property.findMany({
+        where: whereClause,
+        include: {
+          uploader: {
+            select: { name: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      })
+    ]);
 
     const propertiesWithParsedImages = properties.map(prop => ({
       ...prop,
       imageUrls: prop.imageUrls ? JSON.parse(prop.imageUrls) : []
     }));
 
-    res.json(propertiesWithParsedImages);
+    res.json({
+      properties: propertiesWithParsedImages,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (error) {
     console.error("GET /properties error:", error);
     res.status(500).json({ message: 'Server error fetching properties' });
