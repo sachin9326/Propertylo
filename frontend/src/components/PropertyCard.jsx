@@ -7,14 +7,25 @@ import AIMatchBadge from './AIMatchBadge';
 
 const PropertyCard = ({ property, matchScores = {} }) => {
   const { user } = useAuth();
-  const imageUrl = getImageUrl(property.imageUrls?.[0]);
+  
+  const propertyTitle = property.title;
+  const propertyPrice = property.price;
+  const propertyLocation = property.address;
+  const propertyImage = property.imageUrls && property.imageUrls[0];
+  const isVerified = property.isVerified;
 
+  const imageUrl = propertyImage 
+    ? getImageUrl(propertyImage) + (propertyImage.includes('unsplash.com') ? '&w=400&q=60' : '')
+    : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=60';
   const matchData = matchScores[property.id] || null;
 
   const formatPrice = (val) => {
-    if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
-    if (val >= 100000) return `₹${(val / 100000).toFixed(1)} L`;
-    return `₹${val?.toLocaleString('en-IN')}`;
+    if (!val) return 'Price on Request';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(val);
   };
 
   return (
@@ -22,7 +33,8 @@ const PropertyCard = ({ property, matchScores = {} }) => {
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
           src={imageUrl}
-          alt={property.title}
+          alt={propertyTitle}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {/* Top-left badges */}
@@ -42,7 +54,7 @@ const PropertyCard = ({ property, matchScores = {} }) => {
             <FileImage size={12} className="mr-1" />
             {property.imageUrls?.length || 0}
           </div>
-          {property.isVerified && (
+          {isVerified && (
             <div className="bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-md flex items-center text-xs font-semibold">
               <BadgeCheck size={12} className="mr-1" />Verified
             </div>
@@ -75,11 +87,11 @@ const PropertyCard = ({ property, matchScores = {} }) => {
 
       <div className="p-4 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-1">
-          <h3 className="text-base font-bold text-slate-800 line-clamp-1 group-hover:text-primary transition-colors">{property.title}</h3>
+          <h3 className="text-base font-bold text-slate-800 line-clamp-1 group-hover:text-primary transition-colors">{propertyTitle}</h3>
         </div>
         <p className="text-slate-500 text-sm flex items-center mb-1">
           <MapPin size={14} className="mr-1 flex-shrink-0" />
-          <span className="line-clamp-1">{property.address}</span>
+          <span className="line-clamp-1">{propertyLocation}</span>
         </p>
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-3 mt-1">
@@ -102,7 +114,7 @@ const PropertyCard = ({ property, matchScores = {} }) => {
 
         <div className="mt-auto pt-3 border-t border-slate-100 flex justify-between items-center">
           <div className="flex items-baseline text-primary">
-            <span className="text-lg font-bold">{formatPrice(property.price)}</span>
+            <span className="text-lg font-bold">{formatPrice(propertyPrice)}</span>
             {property.type === 'RENT' && <span className="text-xs border-l border-slate-200 ml-2 pl-2 text-slate-500">/mo</span>}
           </div>
           <div className="flex items-center text-slate-500 text-xs font-medium">

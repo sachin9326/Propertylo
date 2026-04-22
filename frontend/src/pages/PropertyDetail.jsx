@@ -34,21 +34,36 @@ const PropertyDetail = () => {
       setLoading(true);
       const { data } = await api.get(`/api/properties/${id}`);
       setProperty(data);
+
+      // Fire all secondary requests IN PARALLEL — not sequentially
+      const secondaryRequests = [];
+
       if (user) {
-        try {
-          const fav = await api.get(`/api/favorites/check/${id}`);
-          setIsSaved(fav.data.saved);
-        } catch (e) {}
-        // Fetch AI match score
-        try {
-          const { data: scoreRes } = await api.post('/api/ai/match-score', { propertyId: id });
-          if (scoreRes.score !== null) setMatchData(scoreRes);
-        } catch (e) {}
+        secondaryRequests.push(
+          api.get(`/api/favorites/check/${id}`)
+            .then(fav => setIsSaved(fav.data.saved))
+            .catch(() => {})
+        );
+        secondaryRequests.push(
+          api.post('/api/ai/match-score', { propertyId: id })
+            .then(({ data: scoreRes }) => {
+              if (scoreRes.score !== null) setMatchData(scoreRes);
+            })
+            .catch(() => {})
+        );
       }
-      try {
-        const similar = await api.get('/api/properties', { params: { city: data.city, type: data.type } });
-        setSimilarProperties(similar.data.filter(p => String(p.id) !== String(id)).slice(0, 4));
-      } catch (e) {}
+
+      secondaryRequests.push(
+        api.get('/api/properties', { params: { city: data.city, type: data.type, limit: 5 } })
+          .then(similar => {
+            const items = similar.data.properties || similar.data || [];
+            setSimilarProperties(items.filter(p => String(p.id) !== String(id)).slice(0, 4));
+          })
+          .catch(() => {})
+      );
+
+      // Wait for all secondary requests at once
+      await Promise.allSettled(secondaryRequests);
     } catch (error) {
       console.error(error);
     } finally {
@@ -76,17 +91,20 @@ const PropertyDetail = () => {
   }
 
   const images = property.imageUrls && property.imageUrls.length > 0
-    ? property.imageUrls.map(url => getImageUrl(url))
+    ? property.imageUrls.map(url => getImageUrl(url) + (url.includes('unsplash.com') ? '&w=600&q=80' : ''))
     : [
-        'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=80',
-        'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=900&q=80',
-        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&q=80',
+        'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80',
+        'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=600&q=80',
+        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=80',
       ];
 
   const formatPrice = (val) => {
-    if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
-    if (val >= 100000) return `₹${(val / 100000).toFixed(1)} L`;
-    return `₹${val?.toLocaleString('en-IN')}`;
+    if (!val) return 'Price on Request';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(val);
   };
 
   const specs = [
@@ -402,7 +420,7 @@ const PropertyDetail = () => {
                 <div className="p-3">
                   <p className="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-primary">{p.title}</p>
                   <p className="text-primary text-sm font-bold mt-1">
-                    {p.price >= 10000000 ? `₹${(p.price / 10000000).toFixed(2)} Cr` : `₹${(p.price / 100000).toFixed(1)} L`}
+                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p.price)}
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">{p.areaSqFt} sqft · {p.bhk || p.propertyType}</p>
                 </div>

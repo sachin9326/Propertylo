@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
@@ -72,6 +72,17 @@ model Property {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Database indexes for fast queries — eliminates full table scans
+  @@index([type])
+  @@index([city])
+  @@index([category])
+  @@index([bhk])
+  @@index([propertyType])
+  @@index([price])
+  @@index([createdAt(sort: Desc)])
+  @@index([type, city, category])
+  @@index([type, createdAt(sort: Desc)])
 }
 
 model Favorite {

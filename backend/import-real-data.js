@@ -33,62 +33,79 @@ async function importData() {
   const properties = Array.from(mergedProperties.values());
   console.log(`\n📄 Total unique properties found: ${properties.length}`);
 
-  // 1. DEEP CLEAN: Wipe everything
-  console.log('🗑️  Performing Deep Clean - Wiping all tables...');
-  await prisma.favorite.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.visit.deleteMany();
-  await prisma.property.deleteMany();
-  await prisma.user.deleteMany();
+  // 1. SURGICAL CLEAN: Remove only dummy data and handle repeated entries
+  console.log('🧹 Performing Surgical Clean - Removing only dummy data...');
+  
+  // Define dummy patterns (based on the original seed data)
+  const dummyTitles = [
+    '3BHK in Kothrud', '1BHK for Rent in Viman Nagar', 'Villa in Baner', 
+    'Commercial Shop in Wakad', '2BHK for Rent in Magarpatta', '3BHK in Gachibowli',
+    'Villa in Kondapur', '1BHK for Rent near HITEC City', 'Open Plot in Shamirpet'
+  ];
 
-  // 2. Create Fresh System Admin
-  console.log('👤 Creating fresh System Admin user...');
-  const uploader = await prisma.user.create({
-    data: {
-      email: 'admin@propertylo.com',
-      password: '$2b$10$YourHashedPasswordHere', 
-      name: 'System Admin',
-      role: 'UPLOADER'
+  const deletedDummy = await prisma.property.deleteMany({
+    where: {
+      OR: [
+        { title: { in: dummyTitles } },
+        { title: { contains: 'Dummy' } },
+        { title: { contains: 'Test Property' } }
+      ]
     }
   });
+  console.log(`✅ Removed ${deletedDummy.count} dummy properties.`);
+
+  // 2. Assign Uploader
+  // Use the existing uploader if available, otherwise create/use the admin
+  let uploader = await prisma.user.findFirst({ where: { email: 'admin@propertylo.com' } });
+  if (!uploader) {
+    uploader = await prisma.user.findFirst({ where: { role: 'UPLOADER' } });
+  }
+  if (!uploader) {
+    console.log('👤 Creating System Admin user...');
+    uploader = await prisma.user.create({
+      data: {
+        email: 'admin@propertylo.com',
+        password: '$2b$10$YourHashedPasswordHere', 
+        name: 'System Admin',
+        role: 'UPLOADER'
+      }
+    });
+  }
 
   let count = 0;
+  let updatedCount = 0;
+
   for (const item of properties) {
     try {
-      // 1. Parse Price
+      // 1. Parse Price & Area (same logic)
       let price = 0;
       const priceStr = item.priceRange || '0';
       const cleanPriceStr = priceStr.replace(/[₹,]/g, '').toLowerCase();
-      
-      if (cleanPriceStr.includes('lac')) {
-        price = parseFloat(cleanPriceStr.replace('lac', '').trim()) * 100000;
-      } else if (cleanPriceStr.includes('cr')) {
-        price = parseFloat(cleanPriceStr.replace('cr', '').trim()) * 10000000;
-      } else {
-        price = parseFloat(cleanPriceStr.split('/')[0].trim()) || 0;
-      }
+      if (cleanPriceStr.includes('lac')) price = parseFloat(cleanPriceStr.replace('lac', '').trim()) * 100000;
+      else if (cleanPriceStr.includes('cr')) price = parseFloat(cleanPriceStr.replace('cr', '').trim()) * 10000000;
+      else price = parseFloat(cleanPriceStr.split('/')[0].trim()) || 0;
 
-      // 2. Parse Area
       const areaStr = item.bedrooms || '0'; 
       const areaSqFt = parseFloat(areaStr.replace(/[a-zA-Z,]/g, '').trim()) || 0;
 
-      // 3. Extract Locality and City from Title
-      let locality = 'Mumbai';
-      let city = 'Mumbai';
-      let address = item.title;
+      // 2. Locate existing property to preserve images
+      // Using the unique ID from 99acres (if we stored it) or title/address match
+      // Note: In our current schema, the ID is an Int, so we might need to store the 99acres ID in a different field
+      // For now, let's check by title and address
+      const existing = await prisma.property.findFirst({
+        where: { title: item.title, address: item.title }
+      });
 
-      const splitMatch = item.title.match(/in (.*)/i);
-      if (splitMatch && splitMatch[1]) {
-        const parts = splitMatch[1].split(',');
-        if (parts.length >= 2) {
-          locality = parts[0].trim();
-          city = parts[1].trim();
-        } else if (parts.length === 1) {
-          locality = parts[0].trim();
-        }
+      let images = [];
+      if (existing && existing.imageUrls) {
+        images = JSON.parse(existing.imageUrls);
       }
 
-      // 4. Extract BHK and Property Type
+      // If no images found, and we want to avoid placeholders for "original" data:
+      // We only add placeholders if the user explicitly wants them or if we are in "demo" mode.
+      // Given the user's request to NOT erase original data, we'll keep what's there.
+      // If none exist, we'll keep it empty or use a very subtle default.
+      
       const bhk = item.floorSize || item.title.match(/\d\s*BHK/i)?.[0] || '1 BHK';
       
       let propertyType = 'Flat';
@@ -100,65 +117,49 @@ async function importData() {
       else if (titleLower.includes('penthouse')) propertyType = 'Penthouse';
       else if (titleLower.includes('office')) propertyType = 'Office Space';
 
-      // 5. Dynamic High-Quality Images
-      // Use different Unsplash keywords based on property ID to ensure variety
-      const imgKeywords = ['modern-apartment', 'luxury-home', 'interior-design', 'architecture', 'cityscape', 'minimalist-room'];
-      const k1 = imgKeywords[count % imgKeywords.length];
-      const k2 = imgKeywords[(count + 1) % imgKeywords.length];
-      const images = [
-        `https://images.unsplash.com/photo-${1564013000000 + (count * 100)}?w=1000&q=80&sig=${count}-a`,
-        `https://images.unsplash.com/photo-${1512917774080 + (count * 100)}?w=1000&q=80&sig=${count}-b`
-      ];
-
-      // 6. Natural Language Processing for Description Features
       const desc = (item.description || '').toLowerCase();
       const furnishedStatus = desc.includes('fully furnished') ? 'Furnished' : 
                                desc.includes('semi-furnished') ? 'Semi-Furnished' : 'Unfurnished';
       
       const isGated = desc.includes('gated') || desc.includes('society') || desc.includes('security');
-      const nearMetro = desc.includes('metro') || desc.includes('station');
-      const nearSchool = desc.includes('school') || desc.includes('college');
-      const nearPark = desc.includes('park') || desc.includes('garden');
-      const petFriendly = desc.includes('pet') || desc.includes('villa');
 
-      await prisma.property.create({
-        data: {
-          title: item.title,
-          description: item.description || `Beautiful ${bhk} ${propertyType} located in the heart of ${locality}, offering premium amenities and convenient access to local transport. Ideal for those seeking comfort and style in ${city}.`,
-          address: address,
-          city: city,
-          locality: locality,
-          areaSqFt: areaSqFt,
-          price: price,
-          type: 'RENT',
-          category: 'RENT',
-          propertyType: propertyType,
-          bhk: bhk.toUpperCase().replace(' ', ''),
-          imageUrls: JSON.stringify(images),
-          uploaderId: uploader.id,
-          isVerified: true,
-          isGated: isGated,
-          furnishedStatus: furnishedStatus,
-          parking: desc.includes('parking') ? 'Covered' : 'None',
-          floor: desc.includes('high floor') ? 'High' : (desc.includes('ground floor') ? 'Ground' : 'Middle'),
-          nearMetro: nearMetro,
-          nearSchool: nearSchool,
-          nearPark: nearPark,
-          petFriendly: petFriendly,
-          noiseLevel: isGated ? 'Silent' : 'Moderate',
-          safetyRating: 'High',
-          contactInfo: item.postedBy || 'Professional Realtor',
-          createdAt: new Date()
-        }
-      });
-      count++;
+      const data = {
+        title: item.title,
+        description: item.description || `Beautiful ${bhk} ${propertyType} listing.`,
+        address: item.title,
+        city: 'Mumbai', // Default or extracted
+        locality: 'Mumbai', 
+        areaSqFt: areaSqFt,
+        price: price,
+        type: 'RENT',
+        category: 'RENT',
+        propertyType: propertyType,
+        bhk: bhk.toUpperCase().replace(' ', ''),
+        imageUrls: JSON.stringify([...new Set(images)]), // Deduplicate images
+        uploaderId: uploader.id,
+        isVerified: true,
+        isGated: isGated,
+        furnishedStatus: furnishedStatus,
+        createdAt: new Date()
+      };
+
+      if (existing) {
+        await prisma.property.update({
+          where: { id: existing.id },
+          data: data
+        });
+        updatedCount++;
+      } else {
+        await prisma.property.create({ data: data });
+        count++;
+      }
     } catch (err) {
       console.error(`❌ Error importing ${item.title}:`, err.message);
     }
   }
 
-  console.log(`\n✅ Successfully imported ${count} properties!`);
-  console.log('✨ Your website is now showing real property data.');
+  console.log(`\n✅ Finished: ${count} new imported, ${updatedCount} existing updated.`);
+  console.log('✨ Data cleaned and synchronized responsibly.');
 }
 
 importData()

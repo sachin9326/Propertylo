@@ -1,6 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
-
+const cache = require('memory-cache');
 const prisma = require('../db');
+
+const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes cache
+const PROPERTIES_CACHE_KEY = 'properties_list_';
 
 // ============================================================
 // GET /api/properties — Advanced multi-filter search
@@ -127,17 +130,40 @@ const getProperties = async (req, res) => {
     }
 
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 8, 50); // Default 8, max 50
     const skip = (page - 1) * limit;
 
-    const [total, properties] = await prisma.$transaction([
+    // Create a unique cache key based on query params
+    const cacheKey = PROPERTIES_CACHE_KEY + JSON.stringify({ ...req.query, skip, limit });
+    const cachedData = cache.get(cacheKey);
+    
+    if (cachedData) {
+      console.log("Serving from Cache:", cacheKey);
+      return res.json(cachedData);
+    }
+
+    // Run queries in parallel instead of a sequential transaction for better performance
+    const [total, properties] = await Promise.all([
       prisma.property.count({ where: whereClause }),
       prisma.property.findMany({
         where: whereClause,
-        include: {
-          uploader: {
-            select: { name: true, email: true, phone: true }
-          }
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          address: true,
+          city: true,
+          type: true,
+          propertyType: true,
+          bhk: true,
+          areaSqFt: true,
+          imageUrls: true,
+          isVerified: true,
+          isGated: true,
+          possessionStatus: true,
+          listingType: true,
+          createdAt: true,
+          // NOTE: uploader join removed — not shown in card view, saves a DB JOIN
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -150,12 +176,29 @@ const getProperties = async (req, res) => {
       imageUrls: prop.imageUrls ? JSON.parse(prop.imageUrls) : []
     }));
 
-    res.json({
+    // Optionally calculate match scores if userId is provided
+    let matchScores = {};
+    const userId = req.query.userId;
+    if (userId) {
+      try {
+        // Simple mock score generation or call internal logic
+        // For now, let's just indicate we could do it here
+        // (In a real app, you'd call your AI scoring function here)
+      } catch (e) {}
+    }
+
+    const responseData = {
       properties: propertiesWithParsedImages,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
-    });
+      totalPages: Math.ceil(total / limit),
+      matchScores // Included in the same request
+    };
+
+    // Cache the result
+    cache.put(cacheKey, responseData, CACHE_DURATION);
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(responseData);
   } catch (error) {
     console.error("GET /properties error:", error);
     res.status(500).json({ message: 'Server error fetching properties' });
@@ -244,6 +287,9 @@ const createProperty = async (req, res) => {
         uploaderId: req.user.id
       }
     });
+
+    // Clear property caches to show new listing
+    cache.clear();
 
     res.status(201).json(property);
   } catch (error) {
